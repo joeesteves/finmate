@@ -29,8 +29,7 @@ export const getAccounts = () =>
     `,
     ),
     Db<Account[]>,
-    E.map(Schema.decodeUnknownOption(Schema.Array(account))),
-    E.map(O.getOrElse(() => [])),
+    E.flatMap(Schema.decodeUnknown(Schema.Array(account))),
   )
 
 export const getAccount = (id: string) =>
@@ -51,7 +50,9 @@ export const createAccount = (accountDto: unknown) =>
   pipe(
     E.Do.pipe(
       E.bind('sql', () => Pg.client.Client),
-      E.bind('decodedAccount', () => S.decodeUnknown(accountDTO)(accountDto)),
+      E.bind('decodedAccount', () =>
+        Schema.decodeUnknown(accountDTO)(accountDto),
+      ),
       E.map(({ decodedAccount, sql }) => {
         return sql`INSERT INTO accounts ${sql.insert(decodedAccount)} RETURNING *`
       }),
