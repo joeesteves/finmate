@@ -1,0 +1,62 @@
+import { Schema as S } from '@effect/schema'
+import type { User } from '../schemas/user'
+import { user, userDTO } from '../schemas/user'
+import * as Pg from '@sqlfx/pg'
+import { Effect as E, Array as A, Option as O, pipe } from 'effect'
+import Db from '../layers/db.layer'
+import { organization, type Organization } from '../schemas/organization'
+
+export const getUserWithOrganizations = (id: string) => {
+  const user = getUser(id)
+  const organizations = getUserOrganizations(id)
+
+  return E.all([user, organizations]).pipe(
+    E.map(([user, organizations]) => {
+      return { ...user, organizations }
+    }),
+  )
+}
+
+const getUserOrganizations = (id: string) =>
+  pipe(
+    Pg.tag,
+    E.map(
+      (sql) => sql`
+      SELECT organizations.*, roles.name as role FROM organizations
+      JOIN roles on roles.organizationId = organizations.id
+      WHERE roles.userId = ${id}
+    `,
+    ),
+    Db<Organization[]>,
+    E.map(S.decodeUnknownOption(S.Array(organization))),
+    E.map(O.getOrElse(() => [])),
+  )
+
+export const getUser = (id: string) =>
+  pipe(
+    Pg.tag,
+    E.map((sql) => sql`SELECT * FROM users where id = ${id}`),
+    Db<User[]>,
+    E.map(A.head),
+    E.map(O.map(S.decodeUnknownOption(user))),
+    E.flatMap(O.getOrThrowWith(() => 'User not found')),
+  )
+
+export const getAll = () =>
+  pipe(
+    Pg.tag,
+    E.map((sql) => sql`SELECT * FROM users`),
+    Db<User[]>,
+  )
+
+export const createUser = (user: unknown) =>
+  pipe(
+    E.Do.pipe(
+      E.bind('sql', () => Pg.tag),
+      E.bind('decodedUser', () => S.decodeUnknown(userDTO)(user)),
+      E.map(({ decodedUser, sql }) => {
+        return sql`INSERT INTO users ${sql.insert(decodedUser)} RETURNING *`
+      }),
+    ),
+    Db<User[]>,
+  )

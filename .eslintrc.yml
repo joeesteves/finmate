@@ -1,0 +1,62 @@
+env:
+  es2021: true
+  node: true
+extends:
+  - next/core-web-vitals
+  - eslint:recommended
+  - plugin:@typescript-eslint/recommended
+parser: '@typescript-eslint/parser'
+parserOptions:
+  project: true
+  ecmaVersion: latest
+  sourceType: module
+plugins:
+  - '@typescript-eslint'
+  - prettier
+rules:
+  indent:
+    - error
+    - 2
+  linebreak-style:
+    - error
+    - unix
+  quotes:
+    - error
+    - single
+  semi:
+    - error
+    - never
+  '@typescript-eslint/consistent-type-exports': 'error'
+  '@typescript-eslint/consistent-type-imports': 'error'
+  '@typescript-eslint/naming-convention':
+    - warn
+    - format:
+        - 'camelCase'
+      selector: 'default'
+      leadingUnderscore: 'allow'
+    - format:
+        - 'PascalCase'
+      selector:
+        - 'class'
+        - 'interface'
+        - 'typeAlias'
+        - 'typeParameter'
+    - format:
+        - camelCase
+        - PascalCase
+      selector:
+        - import
+    - format:
+        - 'strictCamelCase'
+      selector:
+        - function
+        - variable
+      types:
+        - function
+      leadingUnderscore: 'allow'
+    - format:
+      selector: 'objectLiteralProperty'
+  '@typescript-eslint/no-unused-vars':
+    - error
+    - varsIgnorePattern: '^_'
+      argsIgnorePattern: '^_'
