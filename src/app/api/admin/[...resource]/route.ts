@@ -1,9 +1,10 @@
+import { getAccounts } from '@/services/account.service'
+import { Effect } from 'effect'
+
 export async function GET(
-  request: Request,
+  _request: Request,
   { params: { resource } }: { params: { resource: string } },
 ) {
-  return Response.json([
-    { id: "1", name: "Alice", resource },
-    { id: "2", name: "John", resource },
-  ]);
+  const accounts = await Effect.runPromise(getAccounts())
+  return Response.json(accounts)
 }
