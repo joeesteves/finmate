@@ -1,8 +1,8 @@
-import Pg from '@effect/sql'
+import * as Pg from '@effect/sql'
 import { Effect as E, Option as O, pipe, Array as A } from 'effect'
 import Db from '../layers/db.layer'
-import { Schema as S } from '@effect/schema'
 import { account, accountDTO, type Account } from '../schemas/account'
+import { Schema } from '@effect/schema'
 
 class NotFoundError {
   readonly _tag = 'NotFoundError'

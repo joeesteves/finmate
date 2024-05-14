@@ -16,9 +16,11 @@
     "@effect/sql-pg": "^0.2.7",
     "@sqlfx/pg": "^0.47.0",
     "effect": "^3.1.4",
+    "ignore-loader": "^0.1.2",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
+    "source-map-loader": "^5.0.0",
     "sql-highlight": "^4.4.2"
   },
   "devDependencies": {
