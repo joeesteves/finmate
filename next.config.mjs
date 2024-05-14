@@ -1,4 +1,15 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
 
-export default nextConfig;
+const nextConfig = {
+  // webpack: (config, options) => {
+  //   config.module.rules.push({
+  //     test: /\.map$/,
+  //     enforce: 'pre',
+  //     use: ['source-map-loader'],
+  //   })
+  //
+  //   return config
+  // },
+}
+
+export default nextConfig

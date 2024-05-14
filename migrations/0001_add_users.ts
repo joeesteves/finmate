@@ -1,10 +1,10 @@
 import { Effect as E } from 'effect'
-import * as Pg from '@sqlfx/pg'
+import * as Sql from '@effect/sql'
 
 export default {
   up: () =>
     E.map(
-      Pg.tag,
+      Sql.client.Client,
       (sql) => sql`
     CREATE TABLE users (
       id serial PRIMARY KEY,
@@ -18,7 +18,7 @@ export default {
     ),
   down: () =>
     E.map(
-      Pg.tag,
+      Sql.client.Client,
       (sql) => sql`
     DROP TABLE IF EXISTS users
   `,

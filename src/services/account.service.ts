@@ -1,8 +1,7 @@
-import * as S from '@effect/schema/Schema'
-import * as Pg from '@sqlfx/pg'
+import Pg from '@effect/sql'
 import { Effect as E, Option as O, pipe, Array as A } from 'effect'
 import Db from '../layers/db.layer'
-import { Schema } from '@effect/schema'
+import { Schema as S } from '@effect/schema'
 import { account, accountDTO, type Account } from '../schemas/account'
 
 class NotFoundError {
@@ -23,7 +22,7 @@ const recordNotFound =
 
 export const getAccounts = () =>
   pipe(
-    Pg.tag,
+    Pg.client.Client,
     E.map(
       (sql) => sql`
       SELECT * FROM accounts;
@@ -36,7 +35,7 @@ export const getAccounts = () =>
 
 export const getAccount = (id: string) =>
   pipe(
-    Pg.tag,
+    Pg.client.Client,
     E.map(
       (sql) => sql`
       SELECT * FROM accounts WHERE id = ${id}
@@ -51,7 +50,7 @@ export const getAccount = (id: string) =>
 export const createAccount = (accountDto: unknown) =>
   pipe(
     E.Do.pipe(
-      E.bind('sql', () => Pg.tag),
+      E.bind('sql', () => Pg.client.Client),
       E.bind('decodedAccount', () => S.decodeUnknown(accountDTO)(accountDto)),
       E.map(({ decodedAccount, sql }) => {
         return sql`INSERT INTO accounts ${sql.insert(decodedAccount)} RETURNING *`

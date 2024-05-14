@@ -1,12 +1,14 @@
 import { Effect as E, LogLevel, Logger, pipe } from 'effect'
-import type * as Pg from '@sqlfx/pg'
+import type * as SQL from '@effect/sql'
 import PgLive from '../../config/db'
 import { highlight as hl } from 'sql-highlight'
-import type { Statement } from '@sqlfx/sql/Statement'
-import type { Row } from '@sqlfx/sql/Connection'
 import type { ParseError } from '@effect/schema/ParseResult'
+import type { Statement } from '@effect/sql/Statement'
+import type { Row } from '@effect/sql/Connection'
 
-export default <T>(ef: E.Effect<Statement<Row>, ParseError, Pg.PgClient>) =>
+export default <T>(
+  ef: E.Effect<Statement<Row>, ParseError, SQL.client.Client>,
+) =>
   pipe(
     ef,
     E.flatMap((statement) => {
