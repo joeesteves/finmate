@@ -10,23 +10,23 @@ class UnexistantResourceError extends Error {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params: { resource } }: { params: { resource: string[] } },
 ) {
   const [service, _] = resource
-  console.log(resource)
 
-  return Match.value(service)
-    .pipe(
-      Match.when('accounts', () => getAccounts()),
-      Match.when('users', () => getUsers()),
-      Match.orElse((resource) =>
-        Effect.fail(new UnexistantResourceError(resource)),
-      ),
-      Effect.catchTag('UnexistantResource', (e) =>
-        Effect.succeed({ error: e.message }),
-      ),
-      Effect.runPromise,
-    )
-    .then(Response.json)
+  return Match.value(service).pipe(
+    Match.when('accounts', () => getAccounts()),
+    Match.when('users', () => getUsers()),
+    Match.orElse((resource) =>
+      Effect.fail(new UnexistantResourceError(resource)),
+    ),
+    Effect.catchTag('UnexistantResource', (e) =>
+      Effect.succeed({ error: e.message }),
+    ),
+    Effect.andThen((a) =>
+      Response.json(a, { headers: { Cookie: 'token=123' } }),
+    ),
+    Effect.runPromise,
+  )
 }
