@@ -1,6 +1,6 @@
 import { Schema as S, Schema } from '@effect/schema'
 import type { User } from '../schemas/user'
-import { user, userDTO } from '../schemas/user'
+import { user, userDTO, userGET } from '../schemas/user'
 import * as Pg from '@effect/sql'
 import { Effect as E, Array as A, Option as O, pipe } from 'effect'
 import Db from '../layers/db.layer'
@@ -50,14 +50,26 @@ export const getUsers = () =>
     E.flatMap(Schema.decodeUnknown(Schema.Array(user))),
   )
 
-export const createUser = (user: unknown) =>
+export const registerUser = (userInput: unknown) =>
   pipe(
     E.Do.pipe(
       E.bind('sql', () => Pg.client.Client),
-      E.bind('decodedUser', () => S.decodeUnknown(userDTO)(user)),
+      E.bind('decodedUser', () => S.decodeUnknown(userDTO)(userInput)),
+      E.tap(E.logInfo),
       E.map(({ decodedUser, sql }) => {
         return sql`INSERT INTO users ${sql.insert(decodedUser)} RETURNING *`
       }),
     ),
     Db<User[]>,
+    E.flatMap(Schema.decodeUnknown(Schema.Array(userGET))),
+  )
+
+export const getUserByEmail = (email: string) =>
+  pipe(
+    Pg.client.Client,
+    E.map((sql) => sql`SELECT * FROM users where email = ${email}`),
+    Db<User[]>,
+    E.map(A.head),
+    E.map(O.map(S.decodeUnknownOption(userGET))),
+    E.flatMap(O.getOrThrowWith(() => 'User not found')),
   )

@@ -1,3 +1,4 @@
+import { hashSync } from 'bcrypt'
 import { AST, ParseResult } from '@effect/schema'
 import { type Annotable, transformOrFail, make } from '@effect/schema/Schema'
 
@@ -7,6 +8,6 @@ interface PasswordHash extends Annotable<PasswordHash, string, string> {}
 const $String: $String = make(AST.stringKeyword)
 
 export const passwordHash: PasswordHash = transformOrFail($String, $String, {
-  decode: (s) => ParseResult.succeed(Bun.password.hashSync(s)),
+  decode: (s) => ParseResult.succeed(hashSync(s, 10)),
   encode: (s) => ParseResult.succeed(s),
-}).annotations({ identifier: 'StringFromNumber' })
+}).annotations({ identifier: 'PasswordHash' })

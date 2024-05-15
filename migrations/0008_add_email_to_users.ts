@@ -10,7 +10,7 @@ export const migration = {
 
     ALTER TABLE users
     ADD COLUMN email citext NOT NULL,
-    ADD COLUMN password_hash BYTEA NOT NULL;
+    ADD COLUMN password_hash varchar(250) NOT NULL;
 
     CREATE UNIQUE INDEX ON users (email);
   `,
@@ -21,6 +21,7 @@ export const migration = {
       (sql) => sql`
     ALTER TABLE users
     DROP COLUMN email
+    DROP COLUMN password_hash
   `,
     ),
 }

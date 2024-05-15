@@ -1,17 +1,17 @@
 const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault()
   const target = e.target as typeof e.target & {
-    username: { value: string }
+    name: { value: string }
     password: { value: string }
     email: { value: string }
   }
-  const username = target.username.value
+  const name = target.name.value
   const password = target.password.value
   const email = target.email.value
 
   fetch('/api/users', {
     method: 'POST',
-    body: JSON.stringify({ username, password, email }),
+    body: JSON.stringify({ name, password, email }),
   })
     .then((res) => res.json())
     .then(console.log)
@@ -20,7 +20,7 @@ const handleSubmit = (e: React.FormEvent) => {
 const UserSignIn = () => {
   return (
     <form onSubmit={handleSubmit}>
-      <input type="text" name="username" placeholder="Username" />
+      <input type="text" name="name" placeholder="Username" />
       <input type="text" name="password" placeholder="Password" />
       <input type="text" name="email" placeholder="Email" />
       <button type="submit">Register</button>
