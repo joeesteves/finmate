@@ -1,7 +1,7 @@
 import { Effect as E } from 'effect'
 import * as Sql from '@effect/sql'
 
-export default {
+const migration = {
   up: () =>
     E.map(
       Sql.client.Client,
@@ -24,3 +24,5 @@ export default {
   `,
     ),
 }
+
+export default migration

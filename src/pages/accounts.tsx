@@ -1,15 +1,15 @@
 export const getServerSideProps = async () => {
   // Fetch data from external API
-  const res = await fetch("http://localhost:3000/api/admin/accounts");
-  const repo = await res.json();
+  const res = await fetch('http://localhost:3000/api/admin/accounts')
+  const repo = await res.json()
   // Pass data to the page via props
-  return { props: { repo } };
-};
+  return { props: { repo } }
+}
 
 type Account = {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 export default function Accounts({ repo }: { repo: Account[] }) {
   return (
@@ -22,5 +22,5 @@ export default function Accounts({ repo }: { repo: Account[] }) {
         ))}
       </ul>
     </div>
-  );
+  )
 }
