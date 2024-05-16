@@ -1,6 +1,6 @@
 import * as Pg from '@effect/sql'
 import { Effect as E, Option as O, pipe, Array as A } from 'effect'
-import { DB_LAYER } from '../layers/db.layer'
+import { DBLayer } from '../layers/db.layer'
 import { account, accountDTO, type Account } from '../schemas/account'
 import { Schema } from '@effect/schema'
 
@@ -28,7 +28,7 @@ export const getAccounts = () =>
       SELECT * FROM accounts;
     `,
     ),
-    DB_LAYER<Account[]>,
+    DBLayer<Account[]>,
     E.flatMap(Schema.decodeUnknown(Schema.Array(account))),
   )
 
@@ -40,7 +40,7 @@ export const getAccount = (id: string) =>
       SELECT * FROM accounts WHERE id = ${id}
     `,
     ),
-    DB_LAYER<Account[]>,
+    DBLayer<Account[]>,
     E.map(Schema.decodeUnknownOption(Schema.Array(account))),
     E.map(O.flatMap(A.head)),
     E.flatMap(recordNotFound(`Accound with id ${id}`)),
@@ -57,7 +57,7 @@ export const createAccount = (accountDto: unknown) =>
         return sql`INSERT INTO accounts ${sql.insert(decodedAccount)} RETURNING *`
       }),
     ),
-    DB_LAYER<Account[]>,
+    DBLayer<Account[]>,
     E.map(Schema.decodeUnknownOption(Schema.Array(account))),
     E.map(O.flatMap(A.head)),
     E.flatMap(recordNotFound('Failed to create Account')),

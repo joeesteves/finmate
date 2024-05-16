@@ -7,7 +7,7 @@ import type { ParseError } from '@effect/schema/ParseResult'
 import type { Statement } from '@effect/sql/Statement'
 import type { Row } from '@effect/sql/Connection'
 
-const DB_LAYER = <T>(
+const DBLayer = <T>(
   ef: E.Effect<Statement<Row>, ParseError, SQL.client.Client>,
 ) =>
     pipe(
@@ -24,4 +24,4 @@ const DB_LAYER = <T>(
       E.provide(Logger.minimumLogLevel(LogLevel.Info)),
     )
 
-export { DB_LAYER }
+export { DBLayer }
