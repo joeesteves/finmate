@@ -50,9 +50,15 @@ rules:
         - 'strictCamelCase'
       selector:
         - function
-        - variable
       types:
         - function
+      leadingUnderscore: 'allow'
+    - format:
+        - PascalCase
+        - camelCase
+        - UPPER_CASE
+      selector:
+        - variable
       leadingUnderscore: 'allow'
     - format:
       selector: 'objectLiteralProperty'
