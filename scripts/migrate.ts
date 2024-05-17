@@ -1,5 +1,5 @@
 import { Effect as E, LogLevel, Logger, Match, pipe } from 'effect'
-import PgLive from '../config/db'
+import { PgLive } from '../config/db'
 import { migration } from '../migrations/0008_add_email_to_users'
 import { highlight as hl } from 'sql-highlight'
 

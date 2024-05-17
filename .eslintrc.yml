@@ -67,6 +67,16 @@ rules:
         - function
       leadingUnderscore: 'allow'
     - format:
+        - PascalCase
+      selector:
+        - variable
+      modifiers:
+        - const
+      filter:
+        regex: Layer
+        match: true
+      leadingUnderscore: 'allow'
+    - format:
       selector: 'objectLiteralProperty'
     - format: null
       selector: function

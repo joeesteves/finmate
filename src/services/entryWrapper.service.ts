@@ -1,7 +1,7 @@
 import * as S from '@effect/schema/Schema'
-import * as Pg from '@sqlfx/pg'
+import * as Pg from '@effect/sql-pg'
 import { Effect as E, Option as O, pipe, Array as A } from 'effect'
-import Db from '../layers/db.layer'
+import { DBLayer } from '../layers/db.layer'
 import { Schema } from '@effect/schema'
 import {
   entryWrapper,
@@ -11,26 +11,26 @@ import {
 
 export const getEntryWrappers = () =>
   pipe(
-    Pg.tag,
+    Pg.client.PgClient,
     E.map(
       (sql) => sql`
       SELECT * FROM entry_wrappers;
     `,
     ),
-    Db<EntryWrapper[]>,
+    DBLayer<EntryWrapper[]>,
     E.map(Schema.decodeUnknownOption(Schema.Array(entryWrapper))),
     E.map(O.getOrElse(() => [])),
   )
 
 export const getEntryWrapper = (id: string) =>
   pipe(
-    Pg.tag,
+    Pg.client.PgClient,
     E.map(
       (sql) => sql`
       SELECT * FROM entry_wrappers WHERE id = ${id}
     `,
     ),
-    Db<EntryWrapper[]>,
+    DBLayer<EntryWrapper[]>,
     E.map(Schema.decodeUnknownOption(Schema.Array(entryWrapper))),
     E.map(O.flatMap(A.head)),
     E.flatMap(recordNotFound(`Accound with id ${id}`)),
@@ -39,7 +39,7 @@ export const getEntryWrapper = (id: string) =>
 export const createAccount = (entryWrapperInputDTO: unknown) =>
   pipe(
     E.Do.pipe(
-      E.bind('sql', () => Pg.tag),
+      E.bind('sql', () => Pg.client.PgClient),
       E.bind('decodedEntryWrapper', () =>
         S.decodeUnknown(entryWrapperDTO)(entryWrapperInputDTO),
       ),
@@ -47,7 +47,7 @@ export const createAccount = (entryWrapperInputDTO: unknown) =>
         return sql`INSERT INTO entry_wrappers ${sql.insert(decodedEntryWrapper)} RETURNING *`
       }),
     ),
-    Db<EntryWrapper[]>,
+    DBLayer<EntryWrapper[]>,
     E.map(Schema.decodeUnknownOption(Schema.Array(entryWrapper))),
     E.map(O.flatMap(A.head)),
     E.flatMap(recordNotFound('Failed to create EntryWrapper')),

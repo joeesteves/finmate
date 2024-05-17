@@ -12,18 +12,16 @@
   },
   "dependencies": {
     "@effect/schema": "^0.67.2",
-    "@effect/sql": "^0.2.7",
-    "@effect/sql-pg": "^0.2.7",
-    "@sqlfx/pg": "^0.47.0",
+    "@effect/sql": "^0.2.10",
+    "@effect/sql-pg": "^0.2.10",
+    "@effect/sql-sqlite-bun": "^0.2.10",
     "@types/bcrypt": "^5.0.2",
-    "@types/bun": "^1.1.2",
     "bcrypt": "^5.1.1",
-    "effect": "^3.1.4",
+    "effect": "^3.1.5",
     "ignore-loader": "^0.1.2",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
-    "source-map-loader": "^5.0.0",
     "sql-highlight": "^4.4.2"
   },
   "devDependencies": {

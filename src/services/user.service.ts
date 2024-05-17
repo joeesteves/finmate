@@ -64,6 +64,8 @@ export const registerUser = (userInput: unknown) =>
     E.flatMap(Schema.decodeUnknown(Schema.Array(userGET))),
   )
 
+// registerUser({ email: 'x@z.com', name: 'x', password: 'x' }).pipe(E.runPromise)
+
 export const getUserByEmail = (email: string) =>
   pipe(
     Pg.client.Client,
