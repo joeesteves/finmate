@@ -10,6 +10,6 @@ export const PgLive = Pg.client.layer({
   password: Config.succeed(Secret.fromString('postgres')),
 })
 
-export const PgLiveLite = PgLite.client.layer({
+export const PgLiveLiteLayer = PgLite.client.layer({
   filename: Config.succeed('db.sqlite'),
 })
