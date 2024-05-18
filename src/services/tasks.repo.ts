@@ -39,6 +39,10 @@ const makeTodoRepo = tag.pipe(
       sql`SELECT * FROM tasks WHERE id=${id}`.pipe(
         Effect.andThen(Task.decodeOne),
       ),
+    upsert: (task: Task) =>
+      sql`INSERT INTO tasks (id, title, completed, created) VALUES (${task.id}, ${task.title}, ${task.completed}, date('now')) ON CONFLICT (id) DO UPDATE SET title=${task.title}, completed=${task.completed}  returning *`.pipe(
+        Effect.andThen(Task.decodeOne),
+      ),
   })),
 )
 
@@ -62,4 +66,15 @@ const getById = (id: number) =>
     Effect.runSync,
   )
 
-getById(1)
+const upsertTask = (task: Task) =>
+  TaskRepo.pipe(
+    Effect.andThen((r) => r.upsert(task)),
+    Effect.tap(logSchema),
+    Effect.provide(TaskRepo.layer),
+    Effect.provide(l2),
+    Effect.runSync,
+  )
+
+upsertTask(
+  new Task({ id: 2, title: 'update', completed: 0, created: new Date() }),
+)
