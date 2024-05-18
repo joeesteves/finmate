@@ -1,36 +1,34 @@
-import { client as SqlClient, resolver as SqlResolver } from '@effect/sql'
+import { client as SqlClient } from '@effect/sql'
+import { highlight as hl } from 'sql-highlight'
 import { Task } from '@/schemas/task.schema'
-import { Schema } from '@effect/schema'
 
-import { Effect, Layer } from 'effect'
+import { Console, Context, Effect, Layer, pipe } from 'effect'
 import { PgLiveLiteLayer } from '../../config/db'
+import type { Argument } from '@effect/sql/Statement'
 
-interface TodoEncoded extends Schema.Schema.Encoded<typeof Task> {}
+const sqlClientWithDebug = Effect.sync(
+  () =>
+    (sqlString: TemplateStringsArray, ...params: Argument[]) =>
+      SqlClient.Client.pipe(
+        Effect.flatMap((sql) =>
+          sql(sqlString, ...params).pipe((statement) => {
+            const [sql, params] = statement.compile()
 
-const makeTodoRepo = Effect.sync(() => {
-  return {
-    getOneDB: SqlClient.Client.pipe(
-      Effect.andThen((sql) =>
-        SqlResolver.findById('GetTaskById', {
-          Id: Schema.Number,
-          Result: Task,
-          ResultId: (_) => _.id,
-          execute: (ids) => sql`SELECT * FROM tasks WHERE ${sql.in('id', ids)}`,
-        }),
+            pipe(sql, hl, (psql) => console.log(psql, params))
+
+            return statement
+          }),
+        ),
+        Effect.provide(PgLiveLiteLayer),
       ),
-      Effect.andThen((r) => r.execute),
+)
+
+const makeTodoRepo = Effect.map(sqlClientWithDebug, (sql) => ({
+  getOne: (id: number) =>
+    sql`SELECT * FROM tasks WHERE id=${id}`.pipe(
+      Effect.andThen(Task.decodeOne),
     ),
-    getOne: () =>
-      new Task({
-        id: 1,
-        title: 'test',
-        completed: 1,
-        created: new Date(),
-      })
-        .encode()
-        .pipe(Effect.andThen((t): TodoEncoded => t)),
-  }
-})
+}))
 
 export class TaskRepo extends Effect.Tag('@services/TaskRepo')<
   TaskRepo,
@@ -39,12 +37,16 @@ export class TaskRepo extends Effect.Tag('@services/TaskRepo')<
   static layer = Layer.effect(this, makeTodoRepo)
 }
 
+const logSchema = (encodable: {
+  encode: () => Effect.Effect<unknown, unknown, never>
+}) => encodable.encode().pipe(Effect.tap(Console.log))
+
 const getById = (id: number) =>
   TaskRepo.pipe(
-    Effect.andThen((r) => r.getOneDB(1)),
+    Effect.andThen((r) => r.getOne(id)),
+    Effect.tap(logSchema),
     Effect.provide(TaskRepo.layer),
-    Effect.provide(PgLiveLiteLayer),
     Effect.runSync,
   )
 
-console.log(getById(1))
+getById(1)

@@ -1,4 +1,7 @@
 import { Schema } from '@effect/schema'
+import { Effect } from 'effect'
+
+interface TodoEncoded extends Schema.Schema.Encoded<typeof Task> {}
 
 export class Task extends Schema.Class<Task>('Task')({
   id: Schema.Number,
@@ -6,11 +9,14 @@ export class Task extends Schema.Class<Task>('Task')({
   completed: Schema.Number,
   created: Schema.DateFromString,
 }) {
-  static decode(input: unknown) {
-    return Schema.decodeUnknown(Task)(input)
+  static decodeOne(input: readonly unknown[]) {
+    return Effect.succeed(input).pipe(
+      Effect.head,
+      Effect.andThen(Schema.decodeUnknown(Task)),
+    )
   }
 
   encode() {
-    return Schema.encode(Task)(this)
+    return Schema.encode(Task)(this).pipe(Effect.map((t: TodoEncoded) => t))
   }
 }
