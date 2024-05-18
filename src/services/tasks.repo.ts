@@ -6,29 +6,41 @@ import { Console, Context, Effect, Layer, pipe } from 'effect'
 import { PgLiveLiteLayer } from '../../config/db'
 import type { Argument } from '@effect/sql/Statement'
 
-const sqlClientWithDebug = Effect.sync(
-  () =>
-    (sqlString: TemplateStringsArray, ...params: Argument[]) =>
-      SqlClient.Client.pipe(
-        Effect.flatMap((sql) =>
-          sql(sqlString, ...params).pipe((statement) => {
-            const [sql, params] = statement.compile()
+const sqlClientWithDebug = (
+  sqlString: TemplateStringsArray,
+  ...params: Argument[]
+) =>
+  SqlClient.Client.pipe(
+    Effect.flatMap((sql) =>
+      sql(sqlString, ...params).pipe((statement) => {
+        const [sql, params] = statement.compile()
 
-            pipe(sql, hl, (psql) => console.log(psql, params))
+        pipe(sql, hl, (psql) => console.log(psql, params))
 
-            return statement
-          }),
-        ),
-        Effect.provide(PgLiveLiteLayer),
-      ),
-)
-
-const makeTodoRepo = Effect.map(sqlClientWithDebug, (sql) => ({
-  getOne: (id: number) =>
-    sql`SELECT * FROM tasks WHERE id=${id}`.pipe(
-      Effect.andThen(Task.decodeOne),
+        return statement
+      }),
     ),
-}))
+    Effect.provide(PgLiveLiteLayer),
+  )
+
+const sqlClient = (sqlString: TemplateStringsArray, ...params: Argument[]) =>
+  SqlClient.Client.pipe(
+    Effect.flatMap((sql) => sql(sqlString, ...params)),
+    Effect.provide(PgLiveLiteLayer),
+  )
+
+const tag = Context.GenericTag<typeof sqlClient>('@services/sqlClient')
+const l1 = Layer.effect(tag, Effect.succeed(sqlClient))
+const l2 = Layer.effect(tag, Effect.succeed(sqlClientWithDebug))
+
+const makeTodoRepo = tag.pipe(
+  Effect.andThen((sql) => ({
+    getOne: (id: number) =>
+      sql`SELECT * FROM tasks WHERE id=${id}`.pipe(
+        Effect.andThen(Task.decodeOne),
+      ),
+  })),
+)
 
 export class TaskRepo extends Effect.Tag('@services/TaskRepo')<
   TaskRepo,
@@ -46,6 +58,7 @@ const getById = (id: number) =>
     Effect.andThen((r) => r.getOne(id)),
     Effect.tap(logSchema),
     Effect.provide(TaskRepo.layer),
+    Effect.provide(l2),
     Effect.runSync,
   )
 
