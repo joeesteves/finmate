@@ -1,6 +1,6 @@
 import { Config, Secret } from 'effect'
 import * as Pg from '@effect/sql-pg'
-import * as PgLite from '@effect/sql-sqlite-bun'
+// import * as PgLite from '@effect/sql-sqlite-bun'
 
 export const PgLive = Pg.client.layer({
   database: Config.succeed('mate_back_dev'),
@@ -10,6 +10,6 @@ export const PgLive = Pg.client.layer({
   password: Config.succeed(Secret.fromString('postgres')),
 })
 
-export const PgLiveLiteLayer = PgLite.client.layer({
-  filename: Config.succeed('db.sqlite'),
-})
+// export const PgLiveLiteLayer = PgLite.client.layer({
+//   filename: Config.succeed('db.sqlite'),
+// })

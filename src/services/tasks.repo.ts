@@ -1,37 +1,38 @@
-import { Task } from '@/schemas/task.schema'
+import { Task } from '../schemas/task.schema'
 import { client as Sql } from '@effect/sql'
 import { Console, Effect, Layer, pipe } from 'effect'
-import { PgLiveLiteLayer } from '../../config/db'
-import type { Statement } from '@effect/sql/Statement'
-import type { Row } from '@effect/sql/Connection'
-import { highlight as hl } from 'sql-highlight'
+import { PgLive } from '../../config/db'
+import { logSql } from '../helpers/sql.helper'
+type LogSqlParams = Parameters<typeof logSql>
 
-const logSql = (statement: Statement<Row>) => {
-  const [sql, params] = statement.compile()
+const logSqlAndDecodeOneResult = (a: LogSqlParams[0]) =>
+  pipe(a, logSql, Effect.andThen(Task.decodeOne))
 
-  pipe(sql, hl, (a) => console.log(a, params))
-  return statement
-}
+const makeTodoRepo = Effect.gen(function* () {
+  const sql = yield* Sql.Client
 
-const makeTodoRepo = Sql.Client.pipe(
-  Effect.andThen((sql) => ({
-    getOne: (id: number) =>
-      sql`SELECT * FROM tasks WHERE id=${id}`.pipe(
-        Effect.andThen(Task.decodeOne),
-      ),
-    upsert: (task: Task) =>
-      task
-        .encode()
-        .pipe(
-          Effect.map((encodedTask) =>
-            sql`INSERT INTO tasks ${sql.insert(encodedTask)} returning *`.pipe(
-              logSql,
-              Effect.andThen(Task.decodeOne),
-            ),
-          ),
+  return {
+    find: (id: number) =>
+      pipe(sql`SELECT * FROM tasks WHERE id=${id}`, logSqlAndDecodeOneResult),
+    insert: (task: Task) =>
+      pipe(
+        task.encode(),
+        Effect.map(
+          (eTask) => sql`INSERT INTO tasks ${sql.insert(eTask)} RETURNING *`,
         ),
-  })),
-)
+        Effect.andThen(logSqlAndDecodeOneResult),
+      ),
+    update: (task: Task) =>
+      pipe(
+        task.encode(),
+        Effect.map(
+          (eTask) =>
+            sql`UPDATE tasks SET ${sql.update(eTask)} where id=${eTask.id || 1} RETURNING *`,
+        ),
+        Effect.andThen(logSqlAndDecodeOneResult),
+      ),
+  }
+})
 
 export class TaskRepo extends Effect.Tag('@services/TaskRepo')<
   TaskRepo,
@@ -44,23 +45,32 @@ const logSchema = (encodable: {
   encode: () => Effect.Effect<unknown, unknown, never>
 }) => encodable.encode().pipe(Effect.tap(Console.log))
 
-// const getById = (id: number) =>
-//   TaskRepo.pipe(
-//     Effect.andThen((r) => r.getOne(id)),
-//     Effect.tap(logSchema),
-//     Effect.provide(TaskRepo.layer),
-//     Effect.provide(),
-//     Effect.runSync,
-//   )
-
-const upsertTask = (task: Task) =>
+const find = (id: number) =>
   TaskRepo.pipe(
-    Effect.andThen((r) => r.upsert(task)),
+    Effect.andThen((r) => r.find(id)),
     Effect.provide(TaskRepo.layer),
-    Effect.provide(PgLiveLiteLayer),
-    Effect.runSync,
+    Effect.provide(PgLive),
+    Effect.andThen(logSchema),
+    Effect.runPromise,
   )
 
-upsertTask(
-  new Task({ id: 2, title: 'update', completed: 0, created: new Date() }),
-)
+const insert = (task: Task) =>
+  TaskRepo.pipe(
+    Effect.andThen((r) => r.insert(task)),
+    Effect.provide(TaskRepo.layer),
+    Effect.provide(PgLive),
+    Effect.andThen(logSchema),
+    Effect.runPromise,
+  )
+
+const update = (task: Task) =>
+  TaskRepo.pipe(
+    Effect.andThen((r) => r.update(task)),
+    Effect.provide(TaskRepo.layer),
+    Effect.provide(PgLive),
+    Effect.andThen(logSchema),
+    Effect.runPromise,
+  )
+
+// insert(new Task({ title: 'updated', completed: true, created: new Date() }))
+find(17)

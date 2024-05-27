@@ -4,10 +4,10 @@ import { Effect } from 'effect'
 interface TodoEncoded extends Schema.Schema.Encoded<typeof Task> {}
 
 export class Task extends Schema.Class<Task>('Task')({
-  id: Schema.Number,
+  id: Schema.optional(Schema.Number),
   title: Schema.String,
-  completed: Schema.Number,
-  created: Schema.DateFromString,
+  completed: Schema.Boolean,
+  created: Schema.DateFromSelf,
 }) {
   static decodeOne(input: readonly unknown[]) {
     return Effect.succeed(input).pipe(
