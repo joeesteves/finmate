@@ -1,26 +1,27 @@
-import { Task } from '../schemas/task.schema'
+import { Task } from '@/schemas/task.schema'
 import { client as Sql } from '@effect/sql'
 import { Console, Effect, Layer, pipe } from 'effect'
 import { PgLive } from '../../config/db'
-import { logSql } from '../helpers/sql.helper'
-type LogSqlParams = Parameters<typeof logSql>
-
-const logSqlAndDecodeOneResult = (a: LogSqlParams[0]) =>
-  pipe(a, logSql, Effect.andThen(Task.decodeOne))
+import { logSql } from '@/helpers/sql.helper'
 
 const makeTodoRepo = Effect.gen(function* () {
   const sql = yield* Sql.Client
 
   return {
     find: (id: number) =>
-      pipe(sql`SELECT * FROM tasks WHERE id=${id}`, logSqlAndDecodeOneResult),
+      pipe(
+        sql`SELECT * FROM tasks WHERE id=${id}`,
+        logSql,
+        Effect.andThen(Task.decodeOne),
+      ),
     insert: (task: Task) =>
       pipe(
         task.encode(),
         Effect.map(
           (eTask) => sql`INSERT INTO tasks ${sql.insert(eTask)} RETURNING *`,
         ),
-        Effect.andThen(logSqlAndDecodeOneResult),
+        Effect.andThen(logSql),
+        Effect.andThen(Task.decodeOne),
       ),
     update: (task: Task) =>
       pipe(
@@ -29,7 +30,8 @@ const makeTodoRepo = Effect.gen(function* () {
           (eTask) =>
             sql`UPDATE tasks SET ${sql.update(eTask)} where id=${eTask.id || 1} RETURNING *`,
         ),
-        Effect.andThen(logSqlAndDecodeOneResult),
+        Effect.andThen(logSql),
+        Effect.andThen(Task.decodeOne),
       ),
   }
 })
