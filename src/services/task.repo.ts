@@ -1,8 +1,8 @@
 import { Task } from '@/schemas/task.schema'
 import { client as Sql } from '@effect/sql'
-import { Console, Effect, Layer, pipe } from 'effect'
-import { PgLive } from '../../config/db'
-import { logSql } from '@/helpers/sql.helper'
+import { Effect, Layer, pipe } from 'effect'
+import { logStatement } from '@/helpers/sql.helper'
+import { PgLiveLayer } from './account.service'
 
 const makeTodoRepo = Effect.gen(function* () {
   const sql = yield* Sql.Client
@@ -11,7 +11,7 @@ const makeTodoRepo = Effect.gen(function* () {
     find: (id: number) =>
       pipe(
         sql`SELECT * FROM tasks WHERE id=${id}`,
-        logSql,
+        logStatement,
         Effect.andThen(Task.decodeOne),
       ),
     insert: (task: Task) =>
@@ -20,7 +20,7 @@ const makeTodoRepo = Effect.gen(function* () {
         Effect.map(
           (eTask) => sql`INSERT INTO tasks ${sql.insert(eTask)} RETURNING *`,
         ),
-        Effect.andThen(logSql),
+        Effect.andThen(logStatement),
         Effect.andThen(Task.decodeOne),
       ),
     update: (task: Task) =>
@@ -30,7 +30,7 @@ const makeTodoRepo = Effect.gen(function* () {
           (eTask) =>
             sql`UPDATE tasks SET ${sql.update(eTask)} where id=${eTask.id || 1} RETURNING *`,
         ),
-        Effect.andThen(logSql),
+        Effect.andThen(logStatement),
         Effect.andThen(Task.decodeOne),
       ),
   }
@@ -43,36 +43,13 @@ export class TaskRepo extends Effect.Tag('@services/TaskRepo')<
   static layer = Layer.effect(this, makeTodoRepo)
 }
 
-const logSchema = (encodable: {
-  encode: () => Effect.Effect<unknown, unknown, never>
-}) => encodable.encode().pipe(Effect.tap(Console.log))
-
-const find = (id: number) =>
+const get = (id: number) =>
   TaskRepo.pipe(
     Effect.andThen((r) => r.find(id)),
+    Effect.andThen((r) => r.encode()),
     Effect.provide(TaskRepo.layer),
-    Effect.provide(PgLive),
-    Effect.andThen(logSchema),
+    Effect.provide(PgLiveLayer),
     Effect.runPromise,
   )
 
-const insert = (task: Task) =>
-  TaskRepo.pipe(
-    Effect.andThen((r) => r.insert(task)),
-    Effect.provide(TaskRepo.layer),
-    Effect.provide(PgLive),
-    Effect.andThen(logSchema),
-    Effect.runPromise,
-  )
-
-const update = (task: Task) =>
-  TaskRepo.pipe(
-    Effect.andThen((r) => r.update(task)),
-    Effect.provide(TaskRepo.layer),
-    Effect.provide(PgLive),
-    Effect.andThen(logSchema),
-    Effect.runPromise,
-  )
-
-// insert(new Task({ title: 'updated', completed: true, created: new Date() }))
-find(17)
+get(17).then(console.log)

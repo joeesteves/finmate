@@ -1,7 +1,14 @@
-import { Console, Effect, Option } from 'effect'
-Effect.succeed(null).pipe(
-  Effect.map(Option.fromNullable),
-  Effect.map(Option.getOrElse(() => 'default')),
-  Effect.tap(Console.log),
-  Effect.runSync,
+import { Array, pipe } from 'effect'
+
+const props = pipe(
+  Array.Do,
+  Array.bind('size', () => ['small', 'medium', 'large'] as const),
+  Array.bind(
+    'theme',
+    () => ['dark', 'light', 'contrast-light', 'contrast-dark'] as const,
+  ),
+  Array.bind('disabled', () => [false, true]),
+  Array.bind('loading', () => [false, true]),
 )
+
+console.log(props)
